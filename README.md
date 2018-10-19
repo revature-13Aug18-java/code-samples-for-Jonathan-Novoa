@@ -12,5 +12,5 @@ p2-jonathan-novoa
 Project 2 was the first team project in which we were required to develop a full stack application that consumed an external API.
 
 p3-jonathan-novoa
-The final batch-wide project. I worked on the Maps Microservice team where I created test for the services, reduced vulnerabilites and contributed to the creation of the saved feature location. 
+The final batch-wide project. I worked on the Maps Microservice team where I created test for the services, reduced vulnerabilities and contributed to the creation of the saved feature location. 
 
