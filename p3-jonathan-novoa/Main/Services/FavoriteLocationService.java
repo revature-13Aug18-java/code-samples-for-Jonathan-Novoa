@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.Min;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,16 +14,12 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.errors.ApiException;
 import com.google.maps.model.GeocodingResult;
-import com.google.maps.model.LatLng;
 import com.revature.rideforce.maps.beans.FavoriteLocation;
-import com.revature.rideforce.maps.repository.FavoriteLocationCRUDRepository;
 import com.revature.rideforce.maps.repository.FavoriteLocationRepository;
 
 /**
  * The FavoriteLocationService
  * @author Revature Java batch
- * @Service
- * @Transactional
  */
 @Service
 @Transactional
@@ -46,65 +41,78 @@ public class FavoriteLocationService {
 	@Autowired
 	private FavoriteLocationRepository favoriteLocationRepo;
 
-	@Autowired
-	private FavoriteLocationCRUDRepository favoriteLocationCRUDRepo;
 	/**
 	 * get a favorite location
 	 * @param address
 	 * @param userId
+	 * @param name the location name (eg: "Home", "Work", etc)
 	 * @return LatLng (geographical location represented by latitude/longitude pair)
 	 */
-	public LatLng getOne(String address, @Min(1) int userId) {
+	public FavoriteLocation saveFavoriteLocation(String address, int userId, String name) {
 		FavoriteLocation location;
 		FavoriteLocation location2;
 		try {
 			GeocodingResult[] results = GeocodingApi.geocode(geoApiContext, address).await();
-			location = new FavoriteLocation(address, results[0].geometry.location, userId);
-			location2 = favoriteLocationRepo.findByLatitude(location.getLatitude());
-			if (location2 == null) {
-				favoriteLocationRepo.save(location);
-				return results[0].geometry.location;
-				//this is no other location with that same latitude
-			}
-			else if((location.getLatitude() == location2.getLatitude()) && (location.getLongitude() == location2.getLongitude())) {
-				System.out.println("Location already in saved location database");
-				//need to send some type of response error, not just printing out the console
+			//bean initialization
+			location = new FavoriteLocation(address, results[0].geometry.location.lat,results[0].geometry.location.lng,name, userId);
+			location2 = favoriteLocationRepo.findByLatitudeAndLongitudeAndUserId(location.getLatitude(), location.getLongitude(), userId);
+			String logInfo= String.format("Location with lat,long, and user: %s ", location2);
+			log.info(logInfo);		
+			FavoriteLocation locationByName= favoriteLocationRepo.findByNameAndUserId(name, userId);
+			String logInfo2=String.format("Location with this name and user: %s", locationByName);
+			log.info(logInfo2);
+			if (location2 == null && locationByName==null) {
+				return favoriteLocationRepo.save(location);
 			}
 			else {
-				favoriteLocationRepo.save(location2);
-				return results[0].geometry.location;
+				return new FavoriteLocation();
 			}
 		} catch (ApiException | InterruptedException | IOException e) {
 			log.error("Unexpected exception when fetching location.", e);
 			Thread.currentThread().interrupt();
-			return null;
+			return new FavoriteLocation();
 		}
-		return location.getFavoriteLocation();
-}
-			
+	}
+
+	/**
+	 * delete a favorited location under both a certain userId and certain location name
+	 * @param name the location name (eg: "Home", "Work", etc)
+	 * @param userId
+	 * @return fav the favorite location to delete
+	 */
 	public FavoriteLocation deleteFavoriteLocationByNameAndUserId(String name, int userId) {
-		//favoriteLocationCRUDRepo
 		FavoriteLocation fav = favoriteLocationRepo.findByNameAndUserId(name, userId);
 		if(fav == null) {
 			fav = new FavoriteLocation();
 			return fav;
 		}
-		favoriteLocationCRUDRepo.removeByNameAndUserId(name, userId);
+		favoriteLocationRepo.delete(fav);
 		return fav;
+		//returns the location if successful, empty location if not present
 	}
 
 	/**
-	 * fetching the favorite locations by the user's id
+	 * fetching the favorite locations by the user id
 	 * @param userId
-	 * @return List<FavoriteLocation>
+	 * @return List<FavoriteLocation> a list of favorited locations under a certain userId
 	 */
 	public List<FavoriteLocation> findFavoriteLocationByUserId(int userId) {
-		return favoriteLocationRepo.findFavoriteLocationByUserId(userId);
+		return favoriteLocationRepo.findByUserId(userId);
 	}
 	
-	//saving a value to the location should be a separate method entirely
-	public int saveFavoriteLocation (int userId ) {
-		return 0;
+	/**
+	 * get the geo api context
+	 * @return geoApiContext
+	 */
+	public Object getGeoApiContext() {
+		return geoApiContext;
+	}
+
+	/**
+	 * set the geo api context
+	 */
+	public void setGeoApiContext(GeoApiContext geoApiContext) {
+		this.geoApiContext = geoApiContext;
 	}
 
 }
