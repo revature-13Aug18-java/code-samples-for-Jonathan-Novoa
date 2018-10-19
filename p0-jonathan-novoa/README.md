@@ -11,6 +11,3 @@ MAIN: main driver file
 MODEL: models objects
 UTIL: utilities file used to get connection to the database. 
 
-Technologies: 
-JDBC
-Servlets
