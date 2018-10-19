@@ -6,6 +6,8 @@ The final batch-wide project. I worked on the Maps Microservice team where I cre
 
 Our microservice utilized the google maps api to retrieve the unique location with thier global latittue and longitude. It also was used to determine the distance and duration of a trip that was later used by another microservice. 
 
+Technologies: Spring Boot, Junit, GoogleMaps API, Spring MVC, ECL Emma, SonarLint, Spring Data
+
 Project folders: 
 
 Controllers: FavoriteLocation Controller
